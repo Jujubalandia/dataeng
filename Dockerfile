@@ -1,7 +1,8 @@
 FROM python:3.7-slim 
 
-WORKDIR /srv
-ADD ./requirements.txt /srv/requirements.txt
+WORKDIR /app
+ADD ./requirements.txt /app/requirements.txt
 RUN pip install -r requirements.txt
-ADD . /srv
+ADD . /app
 CMD ["python","-u","app.py"]
+
