@@ -1,12 +1,10 @@
 import os
 import requests
 import time
-import datetime
 from os import environ
 from google.cloud import storage
-import airflow
-from airflow.operators import bash_operator
 from google.cloud import bigquery
+from google.cloud.exceptions import NotFound
 
 from os import listdir
 from os.path import isfile, join
@@ -46,54 +44,10 @@ def gcp_bucket_transfer():
     return 'Uploaded {} to {} bucket with ()'.format(files, bucketName)
 
 
-def dagEtlGSC2BQ():
+def bq_dataset_structure():
 
-    YESTERDAY = datetime.datetime.now() - datetime.timedelta(days=1)
-
-    default_args = {
-        'owner': 'Composer Example',
-        'depends_on_past': False,
-        'email': [''],
-        'email_on_failure': False,
-        'email_on_retry': False,
-        'retries': 1,
-        'retry_delay': datetime.timedelta(minutes=5),
-        'start_date': YESTERDAY,
-    }
-
-    with airflow.DAG(
-            'composer_sample_dag',
-            'catchup=False',
-            default_args=default_args,
-            schedule_interval=datetime.timedelta(days=1)) as dag:
-
-        # Print the dag_run id from the Airflow logs
-        print_dag_run_conf = bash_operator.BashOperator(
-            task_id='print_dag_run_conf', bash_command='echo {{ dag_run.id }}')
-
-
-def etlBQFromGCS():
-
-    client = bigquery.Client()
-    query_job = client.query("""
-        SELECT
-        CONCAT(
-            'https://stackoverflow.com/questions/',
-            CAST(id as STRING)) as url,
-        view_count
-        FROM `bigquery-public-data.stackoverflow.posts_questions`
-        WHERE tags like '%google-bigquery%'
-        ORDER BY view_count DESC
-        LIMIT 10""")
-
-    results = query_job.result()  # Waits for job to complete.
-    for row in results:
-        print("{} : {} views".format(row.url, row.view_count))
-
-
-def bq_create_dataset():
     bigquery_client = bigquery.Client()
-    dataset_ref = bigquery_client.dataset('my_datasset_id')
+    dataset_ref = bigquery_client.dataset(environ.get('BQ_DATASET_NAME'))
 
     try:
         bigquery_client.get_dataset(dataset_ref)
@@ -103,25 +57,20 @@ def bq_create_dataset():
         print('Dataset {} created.'.format(dataset.dataset_id))
 
 
-def bq_create_table():
-    bigquery_client = bigquery.Client()
-    dataset_ref = bigquery_client.dataset('my_datasset_id')
+def bq_datatables_structure(table_name, schema):
 
-    # Prepares a reference to the table
-    table_ref = dataset_ref.table('my_table_name')
+    bigquery_client = bigquery.Client()
+    dataset_ref = bigquery_client.dataset(environ.get('BQ_DATASET_NAME'))
+    table_ref = dataset_ref.table(table_name)
 
     try:
         bigquery_client.get_table(table_ref)
     except NotFound:
-        schema = [
-            bigquery.SchemaField('name', 'STRING', mode='REQUIRED'),
-            bigquery.SchemaField('age', 'INTEGER', mode='REQUIRED'),
-        ]
         table = bigquery.Table(table_ref, schema=schema)
         table = bigquery_client.create_table(table)
         print('table {} created.'.format(table.table_id))
 
-    
+
 if __name__ == "__main__":
 
     base_url = "https://s3.amazonaws.com/data-sprints-eng-test/"
@@ -139,5 +88,43 @@ if __name__ == "__main__":
 
     # gcp_bucket_transfer()
 
-    # dagEtlGSC2BQ()
-    etlBQFromGCS()
+    schema_ny_trips = [
+            bigquery.SchemaField('dropoff_datetime', 'TIMESTAMP', mode='NULLABLE'),
+            bigquery.SchemaField('dropoff_latitude', 'FLOAT', mode='NULLABLE'),
+            bigquery.SchemaField('dropoff_longitude', 'FLOAT', mode='NULLABLE'),
+            bigquery.SchemaField('fare_amount', 'FLOAT', mode='NULLABLE'),   
+            bigquery.SchemaField('passenger_count', 'INTEGER', mode='NULLABLE'),
+            bigquery.SchemaField('payment_type', 'STRING', mode='NULLABLE'), 
+            bigquery.SchemaField('pickup_datetime', 'TIMESTAMP', mode='NULLABLE'),
+            bigquery.SchemaField('pickup_latitude', 'FLOAT', mode='NULLABLE'), 
+            bigquery.SchemaField('pickup_longitude', 'FLOAT', mode='NULLABLE'),
+            bigquery.SchemaField('store_and_fwd_flag', 'INTEGER', mode='NULLABLE'),
+            bigquery.SchemaField('surcharge', 'FLOAT', mode='NULLABLE'),
+            bigquery.SchemaField('tip_amount', 'FLOAT', mode='NULLABLE'),
+            bigquery.SchemaField('tolls_amount', 'FLOAT', mode='NULLABLE'),
+            bigquery.SchemaField('total_amount', 'FLOAT', mode='NULLABLE'),
+            bigquery.SchemaField('trip_distance', 'FLOAT', mode='NULLABLE'),
+            bigquery.SchemaField('vendor_id', 'STRING', mode='NULLABLE')
+    ]
+
+    schema_data_vendor = [
+            bigquery.SchemaField('vendor_id', 'STRING', mode='NULLABLE'),
+            bigquery.SchemaField('name', 'STRING', mode='NULLABLE'),
+            bigquery.SchemaField('address', 'STRING', mode='NULLABLE'),
+            bigquery.SchemaField('city', 'STRING', mode='NULLABLE'),
+            bigquery.SchemaField('state', 'STRING', mode='NULLABLE'),
+            bigquery.SchemaField('zip', 'INTEGER', mode='NULLABLE'),
+            bigquery.SchemaField('country', 'STRING', mode='NULLABLE'),
+            bigquery.SchemaField('contact', 'STRING', mode='NULLABLE'),
+            bigquery.SchemaField('current', 'STRING', mode='NULLABLE')
+    ]
+
+    schema_data_payment = [
+            bigquery.SchemaField('A', 'STRING', mode='NULLABLE'),
+            bigquery.SchemaField('B', 'STRING', mode='NULLABLE'),
+    ]
+
+    # bq_dataset_structure()
+    # bq_datatables_structure('ny_trips', schema_ny_trips)
+    # bq_datatables_structure('data_vendor', schema_data_vendor)
+    # bq_datatables_structure('data_payment', schema_data_payment)
