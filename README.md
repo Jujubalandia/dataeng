@@ -8,6 +8,7 @@ Included some libraries for dealing with http requests, google cloud SDK, mainly
 * google-cloud-storage: 1.23.0
 * google-cloud-bigquery: 1.16.0
 * apache_beam[gcp]: 2.13.0
+* apache-airflow[gcp]: 1.10.6
 * google-cloud-logging: 1.14.0
 * google-cloud-error-reporting: 0.33.0
 

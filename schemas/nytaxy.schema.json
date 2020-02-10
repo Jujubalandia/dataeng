@@ -1,0 +1,87 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "dropoff_datetime",
+    "type": "TIMESTAMP"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "dropoff_latitude",
+    "type": "FLOAT"
+  },  
+  {
+    "mode": "NULLABLE",
+    "name": "dropoff_longitude",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "fare_amount",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "passenger_count",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "payment_type",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "pickup_datetime",
+    "type": "TIMESTAMP"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "pickup_latitude",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "pickup_longitude",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "rate_code",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_and_fwd_flag",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "surcharge",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "tip_amount",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "tolls_amount",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "total_amount",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "trip_distance",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "vendor_id",
+    "type": "STRING"
+  }
+]

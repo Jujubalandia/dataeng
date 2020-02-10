@@ -5,6 +5,7 @@ from os import environ
 from google.cloud import storage
 from google.cloud import bigquery
 from google.cloud.exceptions import NotFound
+from google.api_core.exceptions import BadRequest
 
 from os import listdir
 from os.path import isfile, join
@@ -71,6 +72,37 @@ def bq_datatables_structure(table_name, schema):
         print('table {} created.'.format(table.table_id))
 
 
+def bq_load_json_gsc(uri_file_bucket, table_name):
+
+    client = bigquery.Client()
+    dataset_id = environ.get('BQ_DATASET_NAME')
+
+    dataset_ref = client.dataset(dataset_id)
+    job_config = bigquery.LoadJobConfig()
+    job_config.autodetect = True
+    job_config.max_bad_records = 1000
+    job_config.ignore_unknown_values = True 
+    job_config.source_format = bigquery.SourceFormat.NEWLINE_DELIMITED_JSON
+    uri = uri_file_bucket
+
+    load_job = client.load_table_from_uri(
+        uri,
+        dataset_ref.table(table_name),
+        location="US",
+        job_config=job_config,
+    )
+
+    print("Starting job {}".format(load_job.job_id))
+
+    try:
+        load_job.result()
+        print("Job finished.")
+        destination_table = client.get_table(table_name)
+        print("Loaded {} rows.".format(destination_table.num_rows))
+    except BadRequest:
+        raise RuntimeError(load_job.errors)
+
+
 if __name__ == "__main__":
 
     base_url = "https://s3.amazonaws.com/data-sprints-eng-test/"
@@ -83,10 +115,10 @@ if __name__ == "__main__":
         ("data-payment_lookup.csv", base_url + "data-payment_lookup-csv.csv")
     ]
 
-    # for entry in payloads:
-    #    fetch_jsons(entry)
+    for entry in payloads:
+        fetch_jsons(entry)
 
-    # gcp_bucket_transfer()
+    gcp_bucket_transfer()
 
     schema_ny_trips = [
             bigquery.SchemaField('dropoff_datetime', 'TIMESTAMP', mode='NULLABLE'),
@@ -98,7 +130,8 @@ if __name__ == "__main__":
             bigquery.SchemaField('pickup_datetime', 'TIMESTAMP', mode='NULLABLE'),
             bigquery.SchemaField('pickup_latitude', 'FLOAT', mode='NULLABLE'), 
             bigquery.SchemaField('pickup_longitude', 'FLOAT', mode='NULLABLE'),
-            bigquery.SchemaField('store_and_fwd_flag', 'INTEGER', mode='NULLABLE'),
+            bigquery.SchemaField('rate_code', 'STRING', mode='NULLABLE'),
+            bigquery.SchemaField('store_and_fwd_flag', 'STRING', mode='NULLABLE'),
             bigquery.SchemaField('surcharge', 'FLOAT', mode='NULLABLE'),
             bigquery.SchemaField('tip_amount', 'FLOAT', mode='NULLABLE'),
             bigquery.SchemaField('tolls_amount', 'FLOAT', mode='NULLABLE'),
@@ -124,7 +157,22 @@ if __name__ == "__main__":
             bigquery.SchemaField('B', 'STRING', mode='NULLABLE'),
     ]
 
-    # bq_dataset_structure()
-    # bq_datatables_structure('ny_trips', schema_ny_trips)
-    # bq_datatables_structure('data_vendor', schema_data_vendor)
-    # bq_datatables_structure('data_payment', schema_data_payment)
+    bq_dataset_structure()
+    bq_datatables_structure('ny_trips', schema_ny_trips)
+    bq_datatables_structure('data_vendor', schema_data_vendor)
+    bq_datatables_structure('data_payment', schema_data_payment)
+
+    ny_2009 = "gs://bchallenger-de/data-nyctaxi-trips-2009.json"
+    ny_2010 = "gs://bchallenger-de/data-nyctaxi-trips-2010.json"
+    ny_2011 = "gs://bchallenger-de/data-nyctaxi-trips-2011.json"
+    ny_2012 = "gs://bchallenger-de/data-nyctaxi-trips-2012.json"
+    data_pay = "gs://bchallenger-de/data-payment_lookup.csv"
+    data_vend = "gs://bchallenger-de/data-vendor_lookup.csv"
+    
+    bq_load_json_gsc(ny_2009, 'ny_trips')
+    bq_load_json_gsc(ny_2010, 'ny_trips')
+    bq_load_json_gsc(ny_2011, 'ny_trips')
+    bq_load_json_gsc(ny_2012, 'ny_trips')
+    bq_load_json_gsc(data_pay, 'data_payment')
+    bq_load_json_gsc(data_vend, 'data_vendor')
+

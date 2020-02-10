@@ -1,0 +1,12 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "A",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "B",
+    "type": "STRING"
+  }
+]
